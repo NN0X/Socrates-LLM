@@ -1,5 +1,5 @@
 ﻿CXX = clang++
-CFLAGS = -O3 -Wall -Wextra -Wpedantic -std=c++17
+CFLAGS = -O3 -Wall -Wextra -Wpedantic
 SRC = src
 OUT = main
 
@@ -10,5 +10,5 @@ all:
 	cp -f -r resources build/resources
 	cp LICENSE.md build/LICENSE.md
 	cp README.md build/README.md
-	cp -f -r licenses build/licenses
+	cp NOTICE.md build/NOTICE.md
 	@echo "Build complete. Executable is located at build/$(OUT)"
