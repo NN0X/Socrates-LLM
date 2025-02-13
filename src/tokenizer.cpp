@@ -12,9 +12,13 @@
 #include <cstdint>
 #include <queue>
 
-// INFO: addTokens function and calculateFrequencyThread function are optimized
+#define DEBUG
+#define VERBOSE
 
-// TODO: optimize tokenizeDataset function
+#include "tokenizer.h"
+
+// INFO: addTokens function, calculateFrequencyThread, tokenizeDataset functions are optimized
+
 // TODO: create tokenize function that takes Tokens struct and string to tokenize
 
 // example amazon review data
@@ -68,9 +72,6 @@ void prepareAmazonReviewData(const std::string& inputPath, const std::string& ou
         outputFile.close();
 }
 
-#define MAX_WORD_LENGTH 45
-#define TARGET_UNIQUE_TOKENS 50000
-
 void calculateFrequencyThread(std::unordered_map<std::string, size_t>& frequencyCount,
                               std::unordered_map<std::string, size_t>& threadSpecificFrequencyCount,
                               const std::unordered_map<size_t, std::unordered_set<std::string>>& wordsByLength,
@@ -94,7 +95,7 @@ void calculateFrequencyThread(std::unordered_map<std::string, size_t>& frequency
                                 {
                                         continue;
                                 }
-                                for (const auto& word : wordsLengthBracket.second)
+                                for (const std::string& word : wordsLengthBracket.second)
                                 {
                                         if (word.find(newToken) != std::string::npos)
                                         {
@@ -180,13 +181,15 @@ void addTokens(const std::unordered_map<size_t, std::unordered_set<std::string>>
 
                 usedTokens.insert(mostFrequentUnusedToken);
                 frequencyCount[mostFrequentUnusedToken] = newFrequency;
-                std::cout << "Added token: " << mostFrequentUnusedToken << " with frequency: " << newFrequency << "\n";
-                std::cout << "Checked tokens: " << checkedTokens.size() << "\n";
-                std::cout << "Unique tokens: " << frequencyCount.size() << "\n";
+                LOG("Added token: " + mostFrequentUnusedToken + " with frequency: " + std::to_string(newFrequency));
+                LOG("Checked tokens: " + std::to_string(checkedTokens.size()));
+                LOG("Unique tokens: " + std::to_string(frequencyCount.size()));
         }
 
         if (frequencyCount.size() < targetUniqueTokens)
                 std::cout << "Reached target unique tokens\n";
+        else
+                std::cout << "Did not reach target unique tokens\n";
 }
 
 void tokenizeDataset(const std::string& inputPath, const std::string& outputPath)
@@ -194,32 +197,98 @@ void tokenizeDataset(const std::string& inputPath, const std::string& outputPath
         std::ifstream inputFile(inputPath);
         std::string line;
         std::unordered_map<size_t, std::unordered_set<std::string>> wordsByLength;
-        std::unordered_map<std::string, size_t> frequencyCount;
+        std::unordered_map<std::string, size_t> frequencyCount = {
+                {"a", 0},
+                {"b", 0},
+                {"c", 0},
+                {"d", 0},
+                {"e", 0},
+                {"f", 0},
+                {"g", 0},
+                {"h", 0},
+                {"i", 0},
+                {"j", 0},
+                {"k", 0},
+                {"l", 0},
+                {"m", 0},
+                {"n", 0},
+                {"o", 0},
+                {"p", 0},
+                {"q", 0},
+                {"r", 0},
+                {"s", 0},
+                {"t", 0},
+                {"u", 0},
+                {"v", 0},
+                {"w", 0},
+                {"x", 0},
+                {"y", 0},
+                {"z", 0},
+                {" ", 0},
+                {".", 0},
+                {"!", 0},
+                {"?", 0},
+                {",", 0},
+                {";", 0},
+                {":", 0},
+                {"+", 0},
+                {"=", 0}};
+
+        std::unordered_map<char, std::string> charToString = {
+                {'a', "a"},
+                {'b', "b"},
+                {'c', "c"},
+                {'d', "d"},
+                {'e', "e"},
+                {'f', "f"},
+                {'g', "g"},
+                {'h', "h"},
+                {'i', "i"},
+                {'j', "j"},
+                {'k', "k"},
+                {'l', "l"},
+                {'m', "m"},
+                {'n', "n"},
+                {'o', "o"},
+                {'p', "p"},
+                {'q', "q"},
+                {'r', "r"},
+                {'s', "s"},
+                {'t', "t"},
+                {'u', "u"},
+                {'v', "v"},
+                {'w', "w"},
+                {'x', "x"},
+                {'y', "y"},
+                {'z', "z"},
+                {' ', " "},
+                {'.', "."},
+                {'!', "!"},
+                {'?', "?"},
+                {',', ","},
+                {';', ";"},
+                {':', ":"},
+                {'+', "+"},
+                {'=', "="}};
+
         while (std::getline(inputFile, line))
         {
                 std::istringstream ss(line);
                 std::string word;
                 while (std::getline(ss, word, ' '))
                 {
-                        if (word.size() > MAX_WORD_LENGTH)
+                        size_t wordLength = word.size();
+                        if (wordLength > MAX_WORD_LENGTH)
                         {
                                 continue;
                         }
-                        wordsByLength[word.size()].insert(word);
+                        wordsByLength[wordLength].insert(word);
                         for (char c : word)
                         {
-                                if (frequencyCount.find(std::string(1, c)) == frequencyCount.end())
-                                {
-                                        frequencyCount[std::string(1, c)] = 1;
-                                }
-                                else
-                                {
-                                        frequencyCount[std::string(1, c)]++;
-                                }
+                                frequencyCount[charToString[c]]++;
                         }
                 }
         }
 
         addTokens(wordsByLength, frequencyCount, TARGET_UNIQUE_TOKENS);
-        std::cout << "Unique tokens: " << frequencyCount.size() << "\n";
 }
