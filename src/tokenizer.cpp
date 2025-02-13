@@ -12,11 +12,10 @@
 #include <cstdint>
 #include <queue>
 
+//#define DEBUG
 #define VERBOSE
 
 #include "tokenizer.h"
-
-// INFO: addTokens function, calculateFrequencyThread, tokenizeDataset, tokenizeString, detokenizeString functions are optimized
 
 void calculateFrequencyThread(std::unordered_map<std::string, size_t>& frequencyCount,
                               std::unordered_map<std::string, size_t>& threadSpecificFrequencyCount,

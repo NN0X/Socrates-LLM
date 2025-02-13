@@ -10,6 +10,7 @@
 
 int main()
 {
+        prepareAmazonReviewData("resources/test.csv", "resources/test_prepared.txt");
         prepareAmazonReviewData("resources/train.csv", "resources/train_prepared.txt");
 
         std::vector<std::string> datasets = {"resources/train_prepared.txt", "resources/test_prepared.txt"};
