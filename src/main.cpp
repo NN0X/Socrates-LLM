@@ -13,7 +13,10 @@ int main()
         prepareAmazonReviewData("resources/test.csv", "resources/test_prepared.txt");
         prepareAmazonReviewData("resources/train.csv", "resources/train_prepared.txt");
 
-        tokenizeDataset("resources/test_prepared.txt", "resources/2^15.tok");
+        std::vector<std::string> datasets = {"resources/train_prepared.txt", "resources/test_prepared.txt"};
+        mergeDatasets(datasets, "resources/all.txt");
+
+        tokenizeDataset("resources/all.txt", "resources/2^15.tok");
         TokenDictionary tokenDictionary = loadTokenDictionary("resources/2^15.tok");
 
         // test tokenization
