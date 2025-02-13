@@ -183,7 +183,7 @@ void addTokens(const std::unordered_map<size_t, std::unordered_set<std::string>>
                 LOG("Unique tokens: " + std::to_string(frequencyCount.size()));
         }
 
-        if (frequencyCount.size() < targetUniqueTokens)
+        if (frequencyCount.size() == targetUniqueTokens)
                 std::cout << "Reached target unique tokens\n";
         else
                 std::cout << "Did not reach target unique tokens\n";
@@ -272,8 +272,13 @@ void tokenizeDataset(const std::string& inputPath, const std::string& outputPath
         {
                 std::istringstream ss(line);
                 std::string word;
+                bool firstWord = true;
                 while (std::getline(ss, word, ' '))
                 {
+                        if (!firstWord)
+                        {
+                                word = " " + word;
+                        }
                         size_t wordLength = word.size();
                         if (wordLength > MAX_WORD_LENGTH)
                         {
@@ -284,6 +289,7 @@ void tokenizeDataset(const std::string& inputPath, const std::string& outputPath
                         {
                                 frequencyCount[charToString[c]]++;
                         }
+                        firstWord = false;
                 }
         }
         inputFile.close();
