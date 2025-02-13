@@ -2,7 +2,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <set>
 #include <unordered_set>
 #include <map>
 #include <unordered_map>
@@ -12,9 +11,6 @@
 #include <mutex>
 #include <cstdint>
 #include <queue>
-
-// TODO: compare unoredered_map with map for performance (checkedPhrases)
-// TODO: compare unordered_set with set for performance (usedPhrases)
 
 // example amazon review data
 // "2","header","text"\n
@@ -68,34 +64,34 @@ void prepareAmazonReviewData(const std::string& inputPath, const std::string& ou
 }
 
 #define MAX_WORD_LENGTH 45
-#define TARGET_UNIQUE_TOKENS 50000
+#define TARGET_UNIQUE_TOKENS 1000
 
-void calculateFrequencyThread(std::map<std::string, size_t>& frequencyCount,
-                              std::map<std::string, size_t>& threadSpecificFrequencyCount,
-                              const std::map<size_t, std::set<std::string>>& wordsByLength,
-                              std::unordered_map<std::string, size_t>& checkedPhrases,
-                              std::priority_queue<std::pair<size_t, std::string>>& checkedPhrasesPriorityQueue,
+void calculateFrequencyThread(std::unordered_map<std::string, size_t>& frequencyCount,
+                              std::unordered_map<std::string, size_t>& threadSpecificFrequencyCount,
+                              const std::unordered_map<size_t, std::unordered_set<std::string>>& wordsByLength,
+                              std::unordered_map<std::string, size_t>& checkedTokens,
+                              std::priority_queue<std::pair<size_t, std::string>>& checkedTokensPriorityQueue,
                               std::mutex& frequencyCountMutex)
 {
-        for (const auto& phrase1 : threadSpecificFrequencyCount)
+        for (const auto& token1 : threadSpecificFrequencyCount)
         {
-                for (const auto& phrase2 : frequencyCount)
+                for (const auto& token2 : frequencyCount)
                 {
-                        std::string phrase = phrase1.first + phrase2.first;
-                        if (phrase.size() > MAX_WORD_LENGTH || checkedPhrases.find(phrase) != checkedPhrases.end())
+                        std::string newToken = token1.first + token2.first;
+                        if (newToken.size() > MAX_WORD_LENGTH || checkedTokens.find(newToken) != checkedTokens.end())
                         {
                                 continue;
                         }
                         size_t frequency = 0;
-                        for (const auto& sizeBracket : wordsByLength)
+                        for (const auto& wordsLengthBracket : wordsByLength)
                         {
-                                if (sizeBracket.first < phrase.size())
+                                if (wordsLengthBracket.first < newToken.size())
                                 {
                                         continue;
                                 }
-                                for (const auto& word : sizeBracket.second)
+                                for (const auto& word : wordsLengthBracket.second)
                                 {
-                                        if (word.find(phrase) != std::string::npos)
+                                        if (word.find(newToken) != std::string::npos)
                                         {
                                                 frequency++;
                                         }
@@ -104,26 +100,26 @@ void calculateFrequencyThread(std::map<std::string, size_t>& frequencyCount,
 
                         {
                                 std::lock_guard<std::mutex> lock(frequencyCountMutex);
-                                checkedPhrases[phrase] = frequency;
-                                checkedPhrasesPriorityQueue.push(std::make_pair(frequency, phrase));
+                                checkedTokens[newToken] = frequency;
+                                checkedTokensPriorityQueue.push(std::make_pair(frequency, newToken));
                         }
                 }
         }
 }
 
-void addPhrases(const std::map<size_t, std::set<std::string>> &wordsByLength, std::map<std::string, size_t>& frequencyCount, const size_t targetUniqueTokens)
+void addTokens(const std::unordered_map<size_t, std::unordered_set<std::string>> &wordsByLength, std::unordered_map<std::string, size_t>& frequencyCount, const size_t targetUniqueTokens)
 {
         std::mutex frequencyCountMutex;
-        std::unordered_set<std::string> usedPhrases;
-        std::unordered_map<std::string, size_t> checkedPhrases;
-        std::priority_queue<std::pair<size_t, std::string>> checkedPhrasesPriorityQueue;
+        std::unordered_set<std::string> usedTokens;
+        std::unordered_map<std::string, size_t> checkedTokens;
+        std::priority_queue<std::pair<size_t, std::string>> checkedTokensPriorityQueue;
         uint8_t numThreads = std::thread::hardware_concurrency();
 
-        std::vector<std::map<std::string, size_t>> threadSpecificFrequencyCounts(numThreads);
+        std::vector<std::unordered_map<std::string, size_t>> threadSpecificFrequencyCounts(numThreads);
         size_t i = 0;
-        for (const auto& phrase : frequencyCount)
+        for (const auto& token : frequencyCount)
         {
-                threadSpecificFrequencyCounts[i % numThreads][phrase.first] = phrase.second;
+                threadSpecificFrequencyCounts[i % numThreads][token.first] = token.second;
                 i++;
         }
 
@@ -136,8 +132,8 @@ void addPhrases(const std::map<size_t, std::set<std::string>> &wordsByLength, st
                                                       std::ref(frequencyCount),
                                                       std::ref(threadSpecificFrequencyCounts[i]),
                                                       std::ref(wordsByLength),
-                                                      std::ref(checkedPhrases),
-                                                      std::ref(checkedPhrasesPriorityQueue),
+                                                      std::ref(checkedTokens),
+                                                      std::ref(checkedTokensPriorityQueue),
                                                       std::ref(frequencyCountMutex)));
                 }
 
@@ -148,39 +144,39 @@ void addPhrases(const std::map<size_t, std::set<std::string>> &wordsByLength, st
 
                 for (uint8_t i = 0; i < numThreads; i++)
                 {
-                        for (const auto& phrase : threadSpecificFrequencyCounts[i])
+                        for (const auto& token : threadSpecificFrequencyCounts[i])
                         {
-                                frequencyCount[phrase.first] = phrase.second;
+                                frequencyCount[token.first] = token.second;
                         }
                 }
 
-                std::string mostFrequentUnusedPhrase;
+                std::string mostFrequentUnusedToken;
                 size_t newFrequency = 0;
                 while (true)
                 {
-                        if (checkedPhrasesPriorityQueue.empty())
+                        if (checkedTokensPriorityQueue.empty())
                         {
                                 break;
                         }
-                        std::pair<size_t, std::string> mostFrequentPhrase = checkedPhrasesPriorityQueue.top();
-                        checkedPhrasesPriorityQueue.pop();
-                        if (usedPhrases.find(mostFrequentPhrase.second) == usedPhrases.end())
+                        std::pair<size_t, std::string> mostFrequentToken = checkedTokensPriorityQueue.top();
+                        checkedTokensPriorityQueue.pop();
+                        if (usedTokens.find(mostFrequentToken.second) == usedTokens.end())
                         {
-                                mostFrequentUnusedPhrase = mostFrequentPhrase.second;
-                                newFrequency = mostFrequentPhrase.first;
+                                mostFrequentUnusedToken = mostFrequentToken.second;
+                                newFrequency = mostFrequentToken.first;
                                 break;
                         }
                 }
                 if (newFrequency == 0)
                 {
-                        std::cout << "No more phrases to add\n";
+                        std::cout << "No more tokens to add\n";
                         break;
                 }
 
-                usedPhrases.insert(mostFrequentUnusedPhrase);
-                frequencyCount[mostFrequentUnusedPhrase] = newFrequency;
-                std::cout << "Added phrase: " << mostFrequentUnusedPhrase << " with frequency: " << newFrequency << "\n";
-                std::cout << "Checked phrases: " << checkedPhrases.size() << "\n";
+                usedTokens.insert(mostFrequentUnusedToken);
+                frequencyCount[mostFrequentUnusedToken] = newFrequency;
+                std::cout << "Added token: " << mostFrequentUnusedToken << " with frequency: " << newFrequency << "\n";
+                std::cout << "Checked tokens: " << checkedTokens.size() << "\n";
                 std::cout << "Unique tokens: " << frequencyCount.size() << "\n";
         }
 
@@ -192,8 +188,8 @@ void tokenize(const std::string& inputPath, const std::string& outputPath)
 {
         std::ifstream inputFile(inputPath);
         std::string line;
-        std::map<size_t, std::set<std::string>> wordsByLength;
-        std::map<std::string, size_t> frequencyCount;
+        std::unordered_map<size_t, std::unordered_set<std::string>> wordsByLength;
+        std::unordered_map<std::string, size_t> frequencyCount;
         while (std::getline(inputFile, line))
         {
                 std::istringstream ss(line);
@@ -219,6 +215,6 @@ void tokenize(const std::string& inputPath, const std::string& outputPath)
                 }
         }
 
-        addPhrases(wordsByLength, frequencyCount, TARGET_UNIQUE_TOKENS);
+        addTokens(wordsByLength, frequencyCount, TARGET_UNIQUE_TOKENS);
         std::cout << "Unique tokens: " << frequencyCount.size() << "\n";
 }
