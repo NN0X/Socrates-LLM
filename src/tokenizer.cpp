@@ -183,7 +183,7 @@ void addTokens(const std::unordered_map<size_t, std::unordered_set<std::string>>
                 LOG("Unique tokens: " + std::to_string(frequencyCount.size()));
         }
 
-        if (frequencyCount.size() < targetUniqueTokens)
+        if (frequencyCount.size() == targetUniqueTokens)
                 std::cout << "Reached target unique tokens\n";
         else
                 std::cout << "Did not reach target unique tokens\n";
