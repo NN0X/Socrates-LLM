@@ -12,14 +12,11 @@
 #include <cstdint>
 #include <queue>
 
-#define DEBUG
 #define VERBOSE
 
 #include "tokenizer.h"
 
-// INFO: addTokens function, calculateFrequencyThread, tokenizeDataset functions are optimized
-
-// TODO: create tokenize function that takes Tokens struct and string to tokenize
+// INFO: addTokens function, calculateFrequencyThread, tokenizeDataset, tokenizeString, detokenizeString functions are optimized
 
 // example amazon review data
 // "2","header","text"\n
@@ -289,6 +286,81 @@ void tokenizeDataset(const std::string& inputPath, const std::string& outputPath
                         }
                 }
         }
+        inputFile.close();
 
         addTokens(wordsByLength, frequencyCount, TARGET_UNIQUE_TOKENS);
+
+        std::ofstream outputFile(outputPath);
+        for (const auto& token : frequencyCount)
+        {
+                outputFile << token.first << "\n";
+        }
+        outputFile.close();
+
+        std::cout << "Dataset tokenized\n";
+}
+
+TokenDictionary loadTokenDictionary(const std::string& inputPath)
+{
+        TokenDictionary tokenDictionary;
+        std::ifstream inputFile(inputPath);
+        std::string line;
+        uint16_t tokenIndex = 0;
+        while (std::getline(inputFile, line))
+        {
+                tokenDictionary.tokenToIndex[line] = tokenIndex;
+                tokenDictionary.indexToToken[tokenIndex] = line;
+                tokenDictionary.tokensByLength.push(std::make_pair(line.size(), line));
+                tokenIndex++;
+        }
+        inputFile.close();
+        return tokenDictionary;
+}
+
+std::vector<uint16_t> tokenizeString(const std::string& input, TokenDictionary& tokenDictionary)
+{
+        std::vector<uint16_t> tokens;
+        std::string inputCopy = input;
+
+        while (!inputCopy.empty())
+        {
+                std::priority_queue<std::pair<size_t, std::string>> tokensByLengthCopy = tokenDictionary.tokensByLength;
+                size_t length = inputCopy.size();
+                while (!tokensByLengthCopy.empty())
+                {
+                        std::pair<size_t, std::string> token = tokensByLengthCopy.top();
+                        tokensByLengthCopy.pop();
+                        if (length < token.first)
+                        {
+                                continue;
+                        }
+                        if (inputCopy.find(token.second) == 0)
+                        {
+                                tokens.push_back(tokenDictionary.tokenToIndex[token.second]);
+                                inputCopy = inputCopy.substr(token.second.size());
+                                if (inputCopy.empty())
+                                {
+                                        break;
+                                }
+                                else
+                                {
+                                        tokensByLengthCopy = tokenDictionary.tokensByLength;
+                                }
+                        }
+                }
+        }
+
+        return tokens;
+}
+
+std::string detokenizeString(const std::vector<uint16_t>& tokens, TokenDictionary& tokenDictionary)
+{
+        std::string detokenized;
+
+        for (uint16_t token : tokens)
+        {
+                detokenized += tokenDictionary.indexToToken[token] + " ";
+        }
+
+        return detokenized;
 }
