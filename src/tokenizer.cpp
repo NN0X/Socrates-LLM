@@ -3,9 +3,19 @@
 #include <sstream>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <map>
+#include <unordered_map>
 #include <algorithm>
 #include <climits>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <cstdint>
+
+// TODO: compare unoredered_map with map for performance (checkedPhrases)
+// TODO: compare unordered_set with set for performance (usedPhrases)
+// TODO: add priority queue for checkedPhrases to avoid linear search
 
 // example amazon review data
 // "2","header","text"\n
@@ -61,58 +71,106 @@ void prepareAmazonReviewData(const std::string& inputPath, const std::string& ou
 #define MAX_WORD_LENGTH 45
 #define TARGET_UNIQUE_TOKENS 50000
 
-void addPhrases(const std::map<size_t, std::set<std::string>> &wordsByLength, std::map<std::string, size_t>& frequencyCount, const size_t targetUniqueTokens)
+void calculateFrequencyThread(std::map<std::string, size_t>& frequencyCount,
+                              std::map<std::string, size_t>& threadSpecificFrequencyCount,
+                              const std::map<size_t, std::set<std::string>>& wordsByLength,
+                              const std::unordered_set<std::string>& usedPhrases,
+                              std::unordered_map<std::string, size_t>& checkedPhrases,
+                              std::string& newPhrase,
+                              std::atomic<size_t>& newFrequency,
+                              std::mutex& frequencyCountMutex)
 {
-        std::set<std::string> usedPhrases;
-        std::map<std::string, size_t> checkedPhrases;
-        std::string mostFrequentUnusedPhrase;
-        while (frequencyCount.size() < targetUniqueTokens)
+        for (const auto& phrase1 : threadSpecificFrequencyCount)
         {
-                // find most frequent phrase
-                std::string newPhrase;
-                size_t newFrequency = 0;
-
-                // multithread this for loop
-                for (auto phrase1 : frequencyCount)
+                for (const auto& phrase2 : frequencyCount)
                 {
-                        for (auto phrase2 : frequencyCount)
+                        std::string phrase = phrase1.first + phrase2.first;
+                        if (phrase.size() > MAX_WORD_LENGTH || checkedPhrases.find(phrase) != checkedPhrases.end())
                         {
-                                std::string phrase = phrase1.first + phrase2.first;
-                                if (phrase.size() > MAX_WORD_LENGTH || usedPhrases.find(phrase) != usedPhrases.end() || checkedPhrases.find(phrase) != checkedPhrases.end())
+                                continue;
+                        }
+                        size_t frequency = 0;
+                        for (const auto& sizeBracket : wordsByLength)
+                        {
+                                if (sizeBracket.first < phrase.size())
                                 {
                                         continue;
                                 }
-                                size_t frequency = 0;
-                                for (auto sizeBracket : wordsByLength)
+                                for (auto word : sizeBracket.second)
                                 {
-                                        if (sizeBracket.first < phrase.size())
+                                        if (word.find(phrase) != std::string::npos)
                                         {
-                                                continue;
-                                        }
-                                        for (auto word : sizeBracket.second)
-                                        {
-                                                if (word.find(phrase) != std::string::npos)
-                                                {
-                                                        frequency++;
-                                                }
+                                                frequency++;
                                         }
                                 }
-                                if (frequency > 0)
-                                        std::cout << "Potential new phrase: " << phrase << " with frequency: " << frequency << "\n";
-                                checkedPhrases[phrase] = frequency;
+                        }
 
-                                // critical section
-                                if (frequency > newFrequency)
+                        {
+                                std::lock_guard<std::mutex> lock(frequencyCountMutex);
+                                checkedPhrases[phrase] = frequency;
+                        }
+
+                        if (frequency > newFrequency)
+                        {
                                 {
+                                        std::lock_guard<std::mutex> lock(frequencyCountMutex);
                                         newPhrase = phrase;
-                                        newFrequency = frequency;
                                 }
-                                // end critical section
+                                newFrequency = frequency;
+                        }
+                }
+        }
+}
+
+void addPhrases(const std::map<size_t, std::set<std::string>> &wordsByLength, std::map<std::string, size_t>& frequencyCount, const size_t targetUniqueTokens)
+{
+        std::mutex frequencyCountMutex;
+        std::unordered_set<std::string> usedPhrases;
+        std::unordered_map<std::string, size_t> checkedPhrases;
+        std::string mostFrequentUnusedPhrase;
+        uint8_t numThreads = std::thread::hardware_concurrency();
+
+        std::vector<std::map<std::string, size_t>> threadSpecificFrequencyCounts(numThreads);
+        size_t i = 0;
+        for (const auto& phrase : frequencyCount)
+        {
+                threadSpecificFrequencyCounts[i % numThreads][phrase.first] = phrase.second;
+                i++;
+        }
+
+        while (frequencyCount.size() < targetUniqueTokens)
+        {
+                std::string newPhrase;
+                std::atomic<size_t> newFrequency(0);
+                std::vector<std::thread> threads;
+                for (uint8_t i = 0; i < numThreads; i++)
+                {
+                        threads.push_back(std::thread(calculateFrequencyThread,
+                                        std::ref(frequencyCount),
+                                        std::ref(threadSpecificFrequencyCounts[i]),
+                                        std::ref(wordsByLength),
+                                        std::ref(usedPhrases),
+                                        std::ref(checkedPhrases),
+                                        std::ref(newPhrase),
+                                        std::ref(newFrequency),
+                                        std::ref(frequencyCountMutex)));
+                }
+
+                for (auto& thread : threads)
+                {
+                        thread.join();
+                }
+
+                for (uint8_t i = 0; i < numThreads; i++)
+                {
+                        for (auto phrase : threadSpecificFrequencyCounts[i])
+                        {
+                                frequencyCount[phrase.first] = phrase.second;
                         }
                 }
 
                 std::string newMostFrequentUnusedPhrase;
-                for (auto phrase : checkedPhrases)
+                for (const auto& phrase : checkedPhrases)
                 {
                         if (usedPhrases.find(phrase.first) == usedPhrases.end())
                         {
