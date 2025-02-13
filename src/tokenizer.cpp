@@ -272,8 +272,13 @@ void tokenizeDataset(const std::string& inputPath, const std::string& outputPath
         {
                 std::istringstream ss(line);
                 std::string word;
+                bool firstWord = true;
                 while (std::getline(ss, word, ' '))
                 {
+                        if (!firstWord)
+                        {
+                                word = " " + word;
+                        }
                         size_t wordLength = word.size();
                         if (wordLength > MAX_WORD_LENGTH)
                         {
