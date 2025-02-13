@@ -289,6 +289,7 @@ void tokenizeDataset(const std::string& inputPath, const std::string& outputPath
                         {
                                 frequencyCount[charToString[c]]++;
                         }
+                        firstWord = false;
                 }
         }
         inputFile.close();

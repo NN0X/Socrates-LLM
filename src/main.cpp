@@ -10,7 +10,7 @@
 
 int main()
 {
-        tokenizeDataset("resources/test_prepared.txt", "resources/test.tok");
+        //tokenizeDataset("resources/test_prepared.txt", "resources/test.tok");
         TokenDictionary tokenDictionary = loadTokenDictionary("resources/test.tok");
 
         std::vector<uint16_t> tokens = tokenizeString("hello world", tokenDictionary);
