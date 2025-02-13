@@ -18,57 +18,6 @@
 
 // INFO: addTokens function, calculateFrequencyThread, tokenizeDataset, tokenizeString, detokenizeString functions are optimized
 
-// example amazon review data
-// "2","header","text"\n
-// "1","header","text"\n
-// "5","header","text"\n
-
-const std::vector<char> PUNCTUATION = {'.', '!', '?', ',', ';', ':', '+', '='};
-
-void prepareAmazonReviewData(const std::string& inputPath, const std::string& outputPath)
-{
-        std::ifstream inputFile(inputPath);
-        std::string line;
-        std::ofstream outputFile(outputPath);
-        while (std::getline(inputFile, line))
-        {
-                std::vector<std::string> parts;
-                std::string part;
-                std::istringstream ss(line);
-                while (std::getline(ss, part, ','))
-                {
-                        parts.push_back(part);
-                }
-
-                std::string temp = parts[2];
-                for (size_t i = 0; i < temp.size(); i++)
-                {
-                        char c = temp[i];
-                        if (c == '"' || c == '\n' || c == '\r' || c == '\t')
-                        {
-                                c = ' ';
-                        }
-                        if (c >= 'A' && c <= 'Z')
-                        {
-                                c = c - 'A' + 'a';
-                        }
-                        temp[i] = c;
-                        if (std::find(PUNCTUATION.begin(), PUNCTUATION.end(), c) != PUNCTUATION.end())
-                        {
-                                if (i + 1 < temp.size() && temp[i + 1] != ' ' && std::find(PUNCTUATION.begin(), PUNCTUATION.end(), temp[i + 1]) == PUNCTUATION.end())
-                                {
-                                        temp.insert(i + 1, " ");
-                                        i++;
-                                }
-                        }
-                }
-                outputFile << temp << std::endl;
-        }
-
-        inputFile.close();
-        outputFile.close();
-}
-
 void calculateFrequencyThread(std::unordered_map<std::string, size_t>& frequencyCount,
                               std::unordered_map<std::string, size_t>& threadSpecificFrequencyCount,
                               const std::unordered_map<size_t, std::unordered_set<std::string>>& wordsByLength,

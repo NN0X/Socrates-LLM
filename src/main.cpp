@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "datasets.h"
 #include "tokenizer.h"
 
 // TODO: use HIP for GPU acceleration
@@ -9,9 +10,15 @@
 
 int main()
 {
-        //tokenizeDataset("resources/test_prepared.txt", "resources/test.tok");
-        TokenDictionary tokenDictionary = loadTokenDictionary("resources/test.tok");
+        prepareAmazonReviewData("resources/train.csv", "resources/train_prepared.txt");
 
+        std::vector<std::string> datasets = {"resources/train_prepared.txt", "resources/test_prepared.txt"};
+        mergeDatasets(datasets, "resources/all.txt");
+
+        tokenizeDataset("resources/all.txt", "resources/all.tok");
+        TokenDictionary tokenDictionary = loadTokenDictionary("resources/all.tok");
+
+        // test tokenization
         std::vector<uint16_t> tokens = tokenizeString("hello world", tokenDictionary);
         for (uint16_t token : tokens)
         {
