@@ -12,6 +12,11 @@
 #include <cstdint>
 #include <queue>
 
+// INFO: addTokens function and calculateFrequencyThread function are optimized
+
+// TODO: optimize tokenizeDataset function
+// TODO: create tokenize function that takes Tokens struct and string to tokenize
+
 // example amazon review data
 // "2","header","text"\n
 // "1","header","text"\n
@@ -64,7 +69,7 @@ void prepareAmazonReviewData(const std::string& inputPath, const std::string& ou
 }
 
 #define MAX_WORD_LENGTH 45
-#define TARGET_UNIQUE_TOKENS 1000
+#define TARGET_UNIQUE_TOKENS 50000
 
 void calculateFrequencyThread(std::unordered_map<std::string, size_t>& frequencyCount,
                               std::unordered_map<std::string, size_t>& threadSpecificFrequencyCount,
@@ -184,7 +189,7 @@ void addTokens(const std::unordered_map<size_t, std::unordered_set<std::string>>
                 std::cout << "Reached target unique tokens\n";
 }
 
-void tokenize(const std::string& inputPath, const std::string& outputPath)
+void tokenizeDataset(const std::string& inputPath, const std::string& outputPath)
 {
         std::ifstream inputFile(inputPath);
         std::string line;
