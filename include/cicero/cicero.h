@@ -1,24 +1,22 @@
-#ifndef TOKENIZER_H
-#define TOKENIZER_H
+#ifndef CICERO_H
+#define CICERO_H
 
-#define MAX_WORD_LENGTH 45
-#define TARGET_UNIQUE_TOKENS 65536
-
-#ifdef DEBUG
-#define TARGET_UNIQUE_TOKENS 500
-#endif
-
-#ifdef VERBOSE
-#define LOG(x) std::cout << x << "\n"
-#else
-#define LOG(x)
-#endif
-
-#include <cstdint>
-#include <unordered_map>
-#include <queue>
 #include <vector>
 #include <string>
+#include <unordered_map>
+#include <queue>
+#include <cstdint>
+
+#define DEFAULT_MAX_WORD_LENGTH 45
+#define DEFAULT_UNIQUE_TOKENS 65536
+
+#ifndef MAX_WORD_LENGTH
+#define MAX_WORD_LENGTH DEFAULT_MAX_WORD_LENGTH
+#endif
+
+#ifndef TARGET_UNIQUE_TOKENS
+#define TARGET_UNIQUE_TOKENS DEFAULT_UNIQUE_TOKENS
+#endif
 
 struct TokenDictionary
 {
@@ -33,4 +31,4 @@ TokenDictionary loadTokenDictionary(const std::string& inputPath);
 std::vector<uint16_t> tokenizeString(const std::string& input, TokenDictionary& tokenDictionary);
 std::string detokenizeString(const std::vector<uint16_t>& tokens, TokenDictionary& tokenDictionary);
 
-#endif // TOKENIZER_H
+#endif // CICERO_H

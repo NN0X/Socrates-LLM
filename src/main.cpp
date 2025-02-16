@@ -1,7 +1,6 @@
 #include <iostream>
 
-#include "datasets.h"
-#include "tokenizer.h"
+#include <cicero/cicero.h>
 
 // TODO: use HIP for GPU acceleration
 // TODO: tokenize training and test datasets using subword tokenizer into training.tok and test.tok
@@ -10,27 +9,18 @@
 
 int main()
 {
-        //prepareAmazonReviewData("resources/test.csv", "resources/test_prepared.txt");
-        //prepareAmazonReviewData("resources/train.csv", "resources/train_prepared.txt");
-
-        //std::vector<std::string> datasets = {"resources/train_prepared.txt", "resources/test_prepared.txt"};
-        //mergeDatasets(datasets, "resources/all.txt");
-
-        //tokenizeDataset("resources/all.txt", "dictionaries/2^16.tok");
         TokenDictionary tokenDictionary = loadTokenDictionary("dictionaries/2^16.tok");
+        std::string input = "This is a test string.";
+        std::vector<uint16_t> tokens = tokenizeString(input, tokenDictionary);
 
-        std::cout << "Dictionary loaded.\n";
-
-        // test tokenization
-        std::vector<uint16_t> tokens = tokenizeString("This is a test message.", tokenDictionary);
         for (uint16_t token : tokens)
         {
                 std::cout << token << " ";
         }
         std::cout << "\n";
 
-        std::string detokenized = detokenizeString(tokens, tokenDictionary);
-        std::cout << detokenized << "\n";
+        std::string output = detokenizeString(tokens, tokenDictionary);
+        std::cout << output << "\n";
 
         return 0;
 }
