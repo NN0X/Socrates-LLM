@@ -16,11 +16,13 @@ int main()
         //std::vector<std::string> datasets = {"resources/train_prepared.txt", "resources/test_prepared.txt"};
         //mergeDatasets(datasets, "resources/all.txt");
 
-        //tokenizeDataset("resources/all.txt", "resources/2^16.tok");
+        //tokenizeDataset("resources/all.txt", "dictionaries/2^16.tok");
         TokenDictionary tokenDictionary = loadTokenDictionary("dictionaries/2^16.tok");
 
+        std::cout << "Dictionary loaded.\n";
+
         // test tokenization
-        std::vector<uint16_t> tokens = tokenizeString("hello world", tokenDictionary);
+        std::vector<uint16_t> tokens = tokenizeString("This is a test message.", tokenDictionary);
         for (uint16_t token : tokens)
         {
                 std::cout << token << " ";
