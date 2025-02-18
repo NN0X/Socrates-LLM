@@ -2,6 +2,7 @@
 
 #include <cicero/cicero.h>
 #include "matrix.hpp"
+#include "vector.hpp"
 
 // TODO: use HIP for GPU acceleration
 // TODO: use "Attention is All You Need" in GPT architecture
@@ -22,36 +23,27 @@ int main()
         //std::string output = detokenizeString(tokens, tokenDictionary);
         //std::cout << output << "\n";
 
-        Matrix<int, 2, 2> matrix1;
 
-        matrix1(0, 0) = 1;
-        matrix1(0, 1) = 2;
-        matrix1(1, 0) = 3;
+        const uint64_t N = 2;
+        Matrix<float, N, N> matrix(2.0f);
+        Matrix<float, N, N> diagonal;
+        diagonal.diagonal(5.0f);
+        matrix*=diagonal;
+        matrix.print();
+        std::cout << matrix.trace() << "\n";
 
-        Matrix<int, 2, 2> matrix2;
-        matrix2(0, 0) = 4;
-        matrix2(0, 1) = 5;
-        matrix2(1, 0) = 6;
+        Vector<float, 3> vector(1.0f);
+        vector.print();
+        vector.normalize().print();
 
-        Matrix<int, 2, 2> matrix3 = matrix1 + matrix2;
+        std::cout << vector.magnitude() << "\n";
+        std::cout << vector.dot(vector) << "\n";
+        vector.cross(vector).print();
 
-        matrix1.print();
-        std::cout << "\n";
-        matrix2.print();
-        std::cout << "\n";
-        matrix3.print();
+        Vector<float, 3> cross1(1.0f, 0.0f, 0.0f);
+        Vector<float, 3> cross2(0.0f, 1.0f, 0.0f);
 
-        matrix3 *= 2;
-        std::cout << "\n";
-        matrix3.print();
-
-        matrix3 *= matrix1;
-        std::cout << "\n";
-        matrix3.print();
-
-        matrix3 = matrix1 * matrix2;
-        std::cout << "\n";
-        matrix3.print();
+        cross2.cross(cross1).print();
 
         return 0;
 }
