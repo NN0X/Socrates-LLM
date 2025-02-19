@@ -24,26 +24,5 @@ int main()
         //std::cout << output << "\n";
 
 
-        const uint64_t N = 2;
-        Matrix<float, N, N> matrix(2.0f);
-        Matrix<float, N, N> diagonal;
-        diagonal.diagonal(5.0f);
-        matrix*=diagonal;
-        matrix.print();
-        std::cout << matrix.trace() << "\n";
-
-        Vector<float, 3> vector(1.0f);
-        vector.print();
-        vector.normalize().print();
-
-        std::cout << vector.magnitude() << "\n";
-        std::cout << vector.dot(vector) << "\n";
-        vector.cross(vector).print();
-
-        Vector<float, 3> cross1(1.0f, 0.0f, 0.0f);
-        Vector<float, 3> cross2(0.0f, 1.0f, 0.0f);
-
-        cross2.cross(cross1).print();
-
         return 0;
 }
