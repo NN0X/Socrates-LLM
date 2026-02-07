@@ -38,9 +38,7 @@ We define a filter function $\Phi: E \rightarrow \{0, 1\}$ to sparsify the graph
 
 2.  **Significance Constraint (Z-Score Pruning):**
     An edge $(v_i, v_j)$ is retained only if:
-    $$
-    W_{ij} > \mu_W + \alpha \sigma_W
-    $$
+    $$W_{ij} > \mu_W + \alpha \sigma_W$$
     where $\mu_W$ and $\sigma_W$ are the mean and standard deviation of all positive NPMI scores, and $\alpha$ is a tunable Z-score parameter (typically $\alpha \approx 1.0$).
 
 ### 2.4. Overlapping Community Detection (Soft Clustering)
@@ -48,16 +46,12 @@ We define a **Membership Matrix** $M \in \{0, 1\}^{N \times K}$ where $M_{ik} = 
 
 1.  **Initial Partitioning (Modularity Maximization):**
     We maximize the Modularity $Q$ to find the initial disjoint communities:
-    $$
-    Q = \frac{1}{2m} \sum_{i,j} \left( W_{ij} - \frac{k_i k_j}{2m} \right) \delta(c_i, c_j)
-    $$
+    $$Q = \frac{1}{2m} \sum_{i,j} \left( W_{ij} - \frac{k_i k_j}{2m} \right) \delta(c_i, c_j)$$
     where $m$ is the sum of all weights, $k_i$ is the weighted degree of node $i$, and $\delta$ is the Kronecker delta.
 
 2.  **Fuzzy Membership Extension:**
     To account for polysemy (Bridge Nodes), we extend membership. A word $v_i$ is assigned to cluster $C_k$ if its connectivity to that cluster exceeds a ratio $\beta$:
-    $$
-    M_{ik} = \mathbb{I}\left( \frac{\sum_{j \in C_k} W_{ij}}{\sum_{j \in V} W_{ij}} > \beta \right)
-    $$
+    $$M_{ik} = \mathbb{I}\left( \frac{\sum_{j \in C_k} W_{ij}}{\sum_{j \in V} W_{ij}} > \beta \right)$$
     * **Core Nodes:** $\sum_k M_{ik} = 1$.
     * **Bridge Nodes:** $\sum_k M_{ik} > 1$.
 
@@ -88,15 +82,11 @@ $$
 
 1.  **Stage 1: Cluster Prediction (Steering):**
     A projection layer $f_1$ maps the final hidden state $z$ to the probability distribution over the $K$ clusters:
-    $$
-    P(C_k | z) = \text{Softmax}(W_1 z + b_1)_k
-    $$
+    $$P(C_k | z) = \text{Softmax}(W_1 z + b_1)_k$$
 
 2.  **Stage 2: Concept Prediction (Specifics):**
     Given an active cluster $k$, a cluster-specific projection $f_{2,k}$ maps $z$ to the words strictly within $C_k$:
-    $$
-    P(w | C_k, z) = \text{Softmax}(W_{2,k} z + b_{2,k})_w
-    $$
+    $$P(w | C_k, z) = \text{Softmax}(W_{2,k} z + b_{2,k})_w$$
 
 ---
 
@@ -108,9 +98,10 @@ We define a **Phase-based Loss Function** $\mathcal{L}$ to stabilize training.
 Training is restricted to **Core Nodes** (where $|\mathcal{K}(w)| = 1$). The loss minimizes the negative log-likelihood of the unique valid path:
 
 $$
-\mathcal{L}_{\text{core}} = -\log P(C_{k^*} | z) - \log P(w | C_{k^*}, z)
+\mathcal{L}_{\text{core}} = -\log P(C_{k^\ast} | z) - \log P(w | C_{k^\ast}, z)
 $$
-where $k^*$ is the unique cluster of word $w$.
+
+where $k^\ast$ is the unique cluster of word $w$.
 
 ### Phase 2: Bridge Node Integration
 Training includes **Bridge Nodes** (where $|\mathcal{K}(w)| > 1$). The loss treats the cluster prediction as a Multi-Label problem, permitting any valid path:
