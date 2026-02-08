@@ -62,7 +62,7 @@ We define a **Membership Matrix** $M \in \{0, 1\}^{N \times K}$ where $M_{ik} = 
 The model is a Transformer parameterized by $\theta$.
 
 ### 3.1. Input Representation (Asymmetric Tokenization)
-The input sequence $x = (t_1, ..., t_L)$ consists of **Sub-word Tokens (BPE)** to handle open-vocabulary input.
+The input sequence $x = (t_1, ..., t_L)$ consists of **Type-Frequency Optimized Tokens (Cicero)** to handle open-vocabulary input.
 
 $$
 h_0 = \text{Embedding}(x) + \text{PositionalEncoding}(x)
