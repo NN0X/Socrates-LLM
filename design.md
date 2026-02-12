@@ -91,13 +91,13 @@ To handle novel identifiers (variable names, hashes, strict syntax) not present 
 Given the frozen hidden state $z$, a lightweight recurrent head (or small Transformer block) generates a sequence of characters $c_{1:T}$ until a specialized End-of-Word token ($\text{EOW}$) is produced:
 
 $$
-P(c_t | c_{<t}, z) = \text{Softmax}(W_{\text{char}} h_t + b_{\text{char}})
+P(c_t | c_{\lt}, z) = \text{Softmax}(W_{\text{char}} h_t + b_{\text{char}})
 $$
 
 where $h_t = \text{RNN}(c_{t-1}, h_{t-1}; z)$. The total probability for a novel word $w_{new}$ composed of characters $c_{1:T}$ is:
 
 $$
-P(w_{new} | z) = P(C_\emptyset | z) \cdot \prod_{t=1}^{T} P(c_t | c_{<t}, z)
+P(w_{new} | z) = P(C_{\emptyset} | z) \cdot \prod_{t=1}^{T} P(c_t | c_{\lt}, z)
 $$
 
 ---
