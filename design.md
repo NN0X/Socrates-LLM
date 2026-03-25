@@ -126,4 +126,4 @@ $$
 \mathcal{L}_{\text{total}} = \mathcal{L}_{\text{bridge}} + \lambda_{\text{char}} \mathbb{I}(w \notin V) \left[ -\log P(C_\emptyset | z) - \sum_{t} \log P(c_t | c_{<t}, z) \right]
 $$
 
-*(Note: $\lambda_{\text{char}}$ regulates the cost of using the passthrough to prevent the model from bypassing the semantic graph for known words.)*
+*(Note:* $\lambda_{\text{char}}$ *regulates the cost of using the passthrough to prevent the model from bypassing the semantic graph for known words.)*
